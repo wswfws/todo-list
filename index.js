@@ -26,10 +26,10 @@
 
 class Component {
   constructor() {
-    this._domNode = this.render();
   }
 
   getDomNode() {
+    this._domNode = this.render();
     return this._domNode;
   }
 }
