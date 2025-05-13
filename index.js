@@ -66,12 +66,14 @@ class Task extends Component {
         this.onDelete = onDelete;
         this.onToggle = onToggle;
         this.confirmDelete = false;
+        //this._requestUpdate = onRequestUpdate;
     }
 
     handleDeleteClick(event) {
         if (!this.confirmDelete) {
             this.confirmDelete = true;
             event.target.style.background = "red";
+            //this._requestUpdate();
             return;
         }
         this.onDelete(this.item.name);
@@ -79,23 +81,20 @@ class Task extends Component {
 
     render() {
         const labelStyle = this.item.completed ? "color: gray; text-decoration: line-through;" : "";
+        const deleteBtnAttrs = this.confirmDelete
+            ? { style: "background: red;" }
+            : {};
 
         return createElement("li", {}, [
             createElement("input",
-                this.item.completed
-                    ? {type: "checkbox", checked: "я люблю маму"}
-                    : {type: "checkbox"},
+                { type: "checkbox", ...(this.item.completed && { checked: true }) },
                 null,
-                {
-                    change: () => {
-                        this.onToggle(this.item);
-                    }
-                }),
-            createElement("label", {style: labelStyle}, this.item.name),
-            createElement("button", {}, "🗑️",
-                {
-                    click: (e) => this.handleDeleteClick(e) //this.onDelete(this.item.name)
-                })
+                { change: () => { this.onToggle(this.item); } }
+            ),
+            createElement("label", { style: labelStyle }, this.item.name),
+            createElement("button", deleteBtnAttrs, "🗑️", {
+                click: (e) => this.handleDeleteClick(e)
+            })
         ]);
     }
 }
@@ -128,7 +127,6 @@ class AddTask extends Component {
 class TodoList extends Component {
     constructor() {
         super();
-        // Try to load from localStorage, fallback to default if not found
         const savedState = localStorage.getItem('todoListState');
         this.state = savedState
             ? this.parseSavedState(JSON.parse(savedState))
@@ -140,6 +138,7 @@ class TodoList extends Component {
                 ],
                 newTaskInput: ""
             };
+        this.taskComponents = new Map();
     }
 
     parseSavedState(savedState) {
@@ -158,7 +157,7 @@ class TodoList extends Component {
     }
 
     update() {
-        this.saveState(); // Save to localStorage before updating
+        this.saveState();
         const newDomNode = this.render();
         this._domNode.replaceWith(newDomNode);
         this._domNode = newDomNode;
@@ -166,15 +165,29 @@ class TodoList extends Component {
 
     render() {
         const renderedTasks = this.state.tasks.map((item) => {
-            return new Task(
-                item,
-                (taskName) => this.onDeleteTask(taskName),
-                (task) => {
-                    task.toggleCompleted();
-                    this.update();
-                }
-            ).getDomNode();
+            let taskComp = this.taskComponents.get(item.name);
+            if (!taskComp) {
+                taskComp = new Task(
+                    item,
+                    name => this.onDeleteTask(name),
+                    task => {
+                        task.toggleCompleted();
+                        this.update();
+                    }
+                );
+                this.taskComponents.set(item.name, taskComp);
+            } else {
+                taskComp.item = item;
+            }
+            return taskComp.getDomNode();
         });
+
+        const currentNames = new Set(this.state.tasks.map(t => t.name));
+        for (let name of this.taskComponents.keys()) {
+            if (!currentNames.has(name)) {
+                this.taskComponents.delete(name);
+            }
+        }
 
         return createElement("div", {class: "todo-list"}, [
             createElement("h1", {}, "TODO List"),
