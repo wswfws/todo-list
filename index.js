@@ -63,6 +63,12 @@ class TodoList extends Component {
         };
     }
 
+    update() {
+        const newDomNode = this.render();
+        this._domNode.replaceWith(newDomNode);
+        this._domNode = newDomNode;
+    }
+
     render() {
         const renderedTasks = this.state.tasks.map((item) => {
             return createElement("li", {}, [
@@ -97,33 +103,23 @@ class TodoList extends Component {
 
         const newTask = new TodoItem(this.state.newTaskInput);
         this.state = {
+            ...this.state,
             tasks: [...this.state.tasks, newTask],
             newTaskInput: ""
         };
-        console.log(this.state);
+        this.update();
     }
 
     onAddInputChange(event) {
-        this.state.newTaskInput = event.target.value;
-        console.log(this.state);
+        this.state = {
+            ...this.state,
+            newTaskInput: event.target.value
+        };
     }
-
-    // setState(newState) {
-    //     this.state = {
-    //         ...this.state,
-    //         ...newState
-    //     };
-    //     this._domNode = this.render();
-    //     if (this._parentNode) {
-    //         this._parentNode.innerHTML = '';
-    //         this._parentNode.appendChild(this._domNode);
-    //     }
-    // }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     const todoList = new TodoList();
     const domNode = todoList.getDomNode();
-    todoList._parentNode = document.body;
     document.body.appendChild(domNode);
 });
