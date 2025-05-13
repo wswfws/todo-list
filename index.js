@@ -128,17 +128,37 @@ class AddTask extends Component {
 class TodoList extends Component {
     constructor() {
         super();
-        this.state = {
-            tasks: [
-                new TodoItem("Сделать домашку"),
-                new TodoItem("Сделать практику"),
-                new TodoItem("Пойти домой"),
-            ],
-            newTaskInput: ""
+        // Try to load from localStorage, fallback to default if not found
+        const savedState = localStorage.getItem('todoListState');
+        this.state = savedState
+            ? this.parseSavedState(JSON.parse(savedState))
+            : {
+                tasks: [
+                    new TodoItem("Сделать домашку"),
+                    new TodoItem("Сделать практику"),
+                    new TodoItem("Пойти домой"),
+                ],
+                newTaskInput: ""
+            };
+    }
+
+    parseSavedState(savedState) {
+        return {
+            ...savedState,
+            tasks: savedState.tasks.map(item => {
+                const todoItem = new TodoItem(item._name);
+                todoItem._completed = item._completed;
+                return todoItem;
+            })
         };
     }
 
+    saveState() {
+        localStorage.setItem('todoListState', JSON.stringify(this.state));
+    }
+
     update() {
+        this.saveState(); // Save to localStorage before updating
         const newDomNode = this.render();
         this._domNode.replaceWith(newDomNode);
         this._domNode = newDomNode;
