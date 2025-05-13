@@ -74,7 +74,10 @@ class TodoList extends Component {
             return createElement("li", {}, [
                 createElement("input", {type: "checkbox"}),
                 createElement("label", {}, item.name),
-                createElement("button", {}, "🗑️")
+                createElement("button", {}, "🗑️",
+                    {
+                        click: () => this.onDeleteTask(item.name)
+                    })
             ]);
         });
 
@@ -95,6 +98,14 @@ class TodoList extends Component {
             ]),
             createElement("ul", {id: "todos"}, renderedTasks),
         ]);
+    }
+
+    onDeleteTask(taskToDeleteName) {
+        this.state = {
+            ...this.state,
+            tasks: this.state.tasks.filter(task => task.name !== taskToDeleteName),
+        };
+        this.update()
     }
 
     onAddTask() {
