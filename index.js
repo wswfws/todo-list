@@ -1,9 +1,15 @@
-﻿function createElement(tag, attributes, children) {
+﻿function createElement(tag, attributes, children, callbacks = {}) {
     const element = document.createElement(tag);
 
     if (attributes) {
         Object.keys(attributes).forEach((key) => {
             element.setAttribute(key, attributes[key]);
+        });
+    }
+
+    if (callbacks) {
+        Object.keys(callbacks).forEach((eventName) => {
+            element.addEventListener(eventName, callbacks[eventName]);
         });
     }
 
@@ -42,31 +48,29 @@ class TodoItem {
     get name() {
         return this._name;
     }
-
 }
 
 class TodoList extends Component {
-
     constructor() {
         super();
         this.state = {
             tasks: [
-                new TodoItem(name = "Сделать домашку"),
-                new TodoItem(name = "Сделать практику"),
-                new TodoItem(name = "Пойти домой"),
-            ]
+                new TodoItem("Сделать домашку"),
+                new TodoItem("Сделать практику"),
+                new TodoItem("Пойти домой"),
+            ],
+            newTaskInput: ""
         };
     }
 
     render() {
-
         const renderedTasks = this.state.tasks.map((item) => {
             return createElement("li", {}, [
                 createElement("input", {type: "checkbox"}),
                 createElement("label", {}, item.name),
                 createElement("button", {}, "🗑️")
-            ])
-        })
+            ]);
+        });
 
         return createElement("div", {class: "todo-list"}, [
             createElement("h1", {}, "TODO List"),
@@ -75,14 +79,51 @@ class TodoList extends Component {
                     id: "new-todo",
                     type: "text",
                     placeholder: "Задание",
+                    value: this.state.newTaskInput
+                }, null, {
+                    input: this.onAddInputChange.bind(this)
                 }),
-                createElement("button", {id: "add-btn"}, "+"),
+                createElement("button", {id: "add-btn"}, "+", {
+                    click: this.onAddTask.bind(this)
+                }),
             ]),
             createElement("ul", {id: "todos"}, renderedTasks),
         ]);
     }
+
+    onAddTask() {
+        if (this.state.newTaskInput.trim() === "")
+            return;
+
+        const newTask = new TodoItem(this.state.newTaskInput);
+        this.state = {
+            tasks: [...this.state.tasks, newTask],
+            newTaskInput: ""
+        };
+        console.log(this.state);
+    }
+
+    onAddInputChange(event) {
+        this.state.newTaskInput = event.target.value;
+        console.log(this.state);
+    }
+
+    // setState(newState) {
+    //     this.state = {
+    //         ...this.state,
+    //         ...newState
+    //     };
+    //     this._domNode = this.render();
+    //     if (this._parentNode) {
+    //         this._parentNode.innerHTML = '';
+    //         this._parentNode.appendChild(this._domNode);
+    //     }
+    // }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.body.appendChild(new TodoList().getDomNode());
+    const todoList = new TodoList();
+    const domNode = todoList.getDomNode();
+    todoList._parentNode = document.body;
+    document.body.appendChild(domNode);
 });
